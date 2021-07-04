@@ -10,12 +10,13 @@ begin
   module Rubato
     # scraper methods
     class Client
-      attr_accessor :index_url
+      attr_accessor :index_url, :dest_loc
 
       BASE_URL = 'https://bato.to'
 
-      def initialize(index_url)
+      def initialize(index_url, dest_loc: '../extract')
         @index_url = index_url
+        @dest_loc = dest_loc
       end
 
       def html_parse(page_url)
@@ -86,7 +87,7 @@ begin
 
           puts "Parsing #{chapter} - #{path}"
 
-          folder_name = "./extract/#{title_parse}/#{chapter}"
+          folder_name = "#{dest_loc}/#{title_parse}/#{chapter}"
 
           FileUtils.mkdir_p(folder_name)
           puts "Creating #{folder_name}"
