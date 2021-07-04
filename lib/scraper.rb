@@ -72,8 +72,7 @@ begin
         total_count = 0
 
         content_parse.each do |chapter, path|
-          document = html_parse(path)
-          js = document.xpath('//script').text
+          js = html_parse(path).xpath('//script').text
           str_server = js.split('const server =')[1].split(';')[0]
           str_batojs = js.split('const batojs =')[1].split(';')[0]
 
@@ -91,7 +90,6 @@ begin
 
           FileUtils.mkdir_p(folder_name)
           puts "Creating #{folder_name}"
-          next unless File.directory?(folder_name)
 
           images.each_with_index do |url, index|
             pool.process do
