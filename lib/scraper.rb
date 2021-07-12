@@ -14,7 +14,7 @@ begin
 
       BASE_URL = 'https://bato.to'
 
-      def initialize(index_url, dest_loc: '../extract')
+      def initialize(index_url:, dest_loc: '../extract')
         @index_url = index_url
         @dest_loc = dest_loc
       end
@@ -65,6 +65,7 @@ begin
         puts 'Exiting...'
       end
 
+      # rubocop:disable Metrics/AbcSize
       def page_parse
         cryptojs = URI.parse('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js').read
         pool = Thread.pool(10)
@@ -115,9 +116,11 @@ begin
         end
         pool.shutdown
         puts "Total number of images saved: #{file_count} / #{total_count}" unless content_parse.empty?
+        file_count == total_count
       rescue Interrupt
         puts 'Exiting...'
       end
+      # rubocop:enable Metrics/AbcSize
     end
   end
 rescue StandardError, Interrupt => e
