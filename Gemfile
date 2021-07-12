@@ -13,3 +13,5 @@ gem "thread", "~> 0.2.2"
 gem "pool", "~> 0.0.1"
 
 gem "optparse", "~> 0.1.0"
+
+gem "rspec", "~> 3.10"
