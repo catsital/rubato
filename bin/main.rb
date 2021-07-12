@@ -10,7 +10,7 @@ begin
     include Rubato
 
     def self.scrape(url)
-      Rubato::Client.new(url)
+      Rubato::Client.new(index_url: url)
     end
 
     OptionParser.new do |parser|
