@@ -1,6 +1,8 @@
 # Rubato
 Rubato is a simple image scraper for [Bato](https://bato.to).
 
+![rubato](https://user-images.githubusercontent.com/18095632/127259012-0456d1ee-f6d5-4611-8d05-96a164c2d200.gif)
+
 ## Getting Started
 
 ### Prerequisites
@@ -10,7 +12,6 @@ Rubato is a simple image scraper for [Bato](https://bato.to).
 * First, you should get a copy of this project in your local machine by either downloading the zip file or cloning the repository. `git clone https://github.com/catsital/rubato.git`
 * `cd` into `rubato` directory.
 * Run `bundle install` to install dependencies.
-
 
 ### Usage
 To start scraping, `cd` into `bin` and simply use:
