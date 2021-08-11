@@ -2,10 +2,8 @@ AllCops:
   NewCops: enable
 
 Metrics/MethodLength:
-  Max: 50
+  Max: 25
 Metrics/AbcSize:
-  Max: 60
+  Max: 30
 Metrics/BlockLength:
-  Max: 40
-Metrics/CyclomaticComplexity:
-  Max: 8
+  Max: 15
