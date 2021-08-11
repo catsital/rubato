@@ -1,3 +1,5 @@
+extract/
+
 *.gem
 *.rbc
 /.config
