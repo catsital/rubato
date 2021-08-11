@@ -65,46 +65,48 @@ begin
         puts 'Exiting...'
       end
 
-      # rubocop:disable Metrics/AbcSize
-      def page_parse
+      def server_parse(str_batojs, str_server)
         cryptojs = URI.parse('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js').read
+        duktape = Duktape::Context.new
+        batojs = duktape.eval_string(str_batojs)
+        decrypt = cryptojs.to_s + "CryptoJS.AES.decrypt(#{str_server}, \"#{batojs}\").toString(CryptoJS.enc.Utf8);"
+        duktape.eval_string(decrypt).to_s.gsub('"', '')
+      end
+
+      def image_parse(page)
+        js = html_parse(page).xpath('//script').text
+        str_server = js.split('const server =')[1].split(';')[0]
+        str_batojs = js.split('const batojs =')[1].split(';')[0]
+        str_images = js.split('const images = ["')[1].split('"];')[0]
+        str_images.split('","').map { |image| server_parse(str_batojs, str_server) + image }
+      end
+
+      def export(input, output)
+        URI.parse(input).open do |image|
+          File.open(output, 'wb') do |file|
+            file.write(image.read)
+          end
+          yield until File.exist?(output)
+        end
+      end
+
+      def page_parse
         pool = Thread.pool(10)
         file_count = 0
         total_count = 0
 
         content_parse.each do |chapter, path|
-          js = html_parse(path).xpath('//script').text
-          str_server = js.split('const server =')[1].split(';')[0]
-          str_batojs = js.split('const batojs =')[1].split(';')[0]
-
-          duktape = Duktape::Context.new
-          batojs = duktape.eval_string(str_batojs)
-          decrypt = cryptojs.to_s + "CryptoJS.AES.decrypt(#{str_server}, \"#{batojs}\").toString(CryptoJS.enc.Utf8);"
-          server = duktape.eval_string(decrypt).to_s.gsub('"', '')
-
-          str_images = js.split('const images = ["')[1].split('"];')[0]
-          images = str_images.split('","').map { |image| server + image }
-
-          puts "Parsing #{chapter} - #{path}"
-
           folder_name = "#{dest_loc}/#{title_parse}/#{chapter}"
-
           FileUtils.mkdir_p(folder_name)
           puts "Creating #{folder_name}"
 
-          images.each_with_index do |url, index|
+          image_parse(path).each_with_index do |url, index|
             pool.process do
-              output = "#{folder_name}/#{index}.jpeg"
-
-              URI.parse(url).open do |image|
-                File.open(output, 'wb') do |file|
-                  file.write(image.read)
-                end
-                yield until File.exist?(output)
-              end
+              file = "#{folder_name}/#{index + 1}.jpeg"
+              export(url, file)
 
               file_count += 1
-              puts "Saving #{url} to #{title_parse}/#{chapter}/#{index}.jpeg"
+              puts "Saving #{url} to #{title_parse}/#{chapter}/#{index + 1}.jpeg"
 
               sleep 2
             end
@@ -112,7 +114,7 @@ begin
           rescue Interrupt
             next
           end
-          total_count += images.size.to_i
+          total_count += image_parse(path).size.to_i
         end
         pool.shutdown
         puts "Total number of images saved: #{file_count} / #{total_count}" unless content_parse.empty?
@@ -120,7 +122,6 @@ begin
       rescue Interrupt
         puts 'Exiting...'
       end
-      # rubocop:enable Metrics/AbcSize
     end
   end
 rescue StandardError, Interrupt => e
