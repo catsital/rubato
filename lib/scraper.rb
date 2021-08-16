@@ -9,7 +9,7 @@ require 'thread/pool'
 begin
   module Rubato
     # scraper methods
-    class Client
+    class Scraper
       attr_accessor :index_url, :dest_loc
 
       BASE_URL = 'https://bato.to'

@@ -10,7 +10,7 @@ begin
     include Rubato
 
     def self.scrape(url)
-      Rubato::Client.new(index_url: url)
+      Rubato::Scraper.new(index_url: url)
     end
 
     OptionParser.new do |parser|
@@ -18,11 +18,11 @@ begin
                 'Fetch image(s) from a series or chapter link') do |fetch_url|
         print scrape(fetch_url).page_parse
       end
-      parser.on('-i', '--info URL',
+      parser.on('-c', '--chapters URL',
                 'Fetch page link(s) from a series or chapter page') do |content_url|
         print scrape(content_url).content_parse
       end
-      parser.on('-g', '--get URL',
+      parser.on('-p', '--pages URL',
                 'Fetch image link(s) from an individual chapter page') do |image_url|
         print scrape(image_url).image_parse(image_url)
       end
