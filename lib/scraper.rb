@@ -118,7 +118,6 @@ begin
         end
         pool.shutdown
         puts "Total number of images saved: #{file_count} / #{total_count}" unless content_parse.empty?
-        file_count == total_count
       rescue Interrupt
         puts 'Exiting...'
       end
