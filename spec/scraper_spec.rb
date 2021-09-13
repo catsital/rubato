@@ -4,7 +4,7 @@ require 'rspec'
 require_relative '../lib/scraper'
 
 describe Rubato do
-  subject(:scraper) { Rubato::Client.new(index_url: 'https://bato.to/series/81565') }
+  subject(:scraper) { Rubato::Scraper.new(index_url: 'https://bato.to/series/81565') }
   describe '#content_parse' do
     it 'returns chapter page links parsed from a series page' do
       expect(scraper.content_parse).to eql(
@@ -26,7 +26,7 @@ describe Rubato do
 
   describe '#page_parse' do
     it 'fetch all images to the local drive' do
-      expect(scraper.page_parse).to eql(true)
+      expect(scraper.page_parse).to eql(356)
     end
   end
 end
