@@ -90,34 +90,45 @@ begin
         end
       end
 
+      def display_progress_bar(file_count, total_count, scale: 0.55)
+        max_width = (100 * scale).to_i
+        filled = (max_width * file_count / total_count.to_f).round.to_i
+        remaining = max_width - filled.to_i
+        progress_bar = "█" * filled.to_i + " " * remaining
+        percent = (100.0 * file_count / total_count.to_f).round(1)
+        text = "   |#{progress_bar}| #{percent}% (#{file_count}/#{total_count})\r"
+        print text
+      end
+
       def page_parse
-        pool = Thread.pool(10)
+        pool = Thread.pool(3)
         file_count = 0
         total_count = 0
+        content = content_parse
 
-        content_parse.each do |chapter, path|
+        content.each do |chapter, path|
           folder_name = "#{dest_loc}/#{title_parse}/#{chapter}"
           FileUtils.mkdir_p(folder_name)
-          puts "Creating #{folder_name}"
+          puts "\nTitle: #{title_parse}\nChapter: #{chapter}"
 
-          image_parse(path).each_with_index do |url, index|
+          images = image_parse(path)
+
+          images.each_with_index do |url, index|
             pool.process do
               file = "#{folder_name}/#{index + 1}.jpeg"
               export(url, file)
-
               file_count += 1
-              puts "Saving #{url} to #{title_parse}/#{chapter}/#{index + 1}.jpeg"
-
+              display_progress_bar(file_count, images.size.to_i)
               sleep 2
             end
 
           rescue Interrupt
             next
           end
-          total_count += image_parse(path).size.to_i
+          total_count += images.size.to_i
         end
         pool.shutdown
-        puts "Total number of images saved: #{file_count} / #{total_count}" unless content_parse.empty?
+        puts "Batch Total: #{file_count}/#{total_count}" unless content.size <= 1
       rescue Interrupt
         puts 'Exiting...'
       end
