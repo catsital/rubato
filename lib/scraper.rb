@@ -10,12 +10,11 @@ begin
   module Rubato
     # scraper methods
     class Scraper
-      attr_accessor :index_url, :dest_loc
+      attr_accessor :dest_loc
 
       BASE_URL = 'https://bato.to'
 
-      def initialize(index_url:, dest_loc: '../extract')
-        @index_url = index_url
+      def initialize(dest_loc: '../extract')
         @dest_loc = dest_loc
       end
 
@@ -29,40 +28,35 @@ begin
         Nokogiri::HTML(page)
       end
 
-      def title_parse
-        if index_url.include? 'series'
-          html_parse(index_url).xpath("//h3[@class='item-title']").text.gsub(%r{[?"|:<>*/\\]}, '').strip.to_s
-        elsif index_url.include? 'chapter'
-          html_parse(index_url).xpath('//title').text.split('-')[0].gsub(%r{[?"|:<>*/\\]}, '').strip.to_s
-        end
+      def title_parse(page)
+        series = page.xpath('//title').text.split('-')[0].gsub(%r{[?"|:<>*/\\]}, '').strip.to_s
+        chapter = page.xpath('//title').text.split('-')[1].strip
+        title = [series, chapter]
       end
 
-      def content_list_parse
-        html_parse(index_url).xpath("//a[@class='visited chapt']/b").reverse_each.map { |chapter| chapter.text.strip }
-      end
-
-      def content_path_parse
-        html_parse(index_url).xpath("//a[@class='visited chapt']/@href").reverse_each.map { |loc| BASE_URL + loc.text }
-      end
-
-      def content_parse
+      def series_parse(page)
         series = {}
+        content_list = page.xpath("//a[@class='visited chapt']/b").reverse_each.map { |chapter| chapter.text.strip }
+        content_path = page.xpath("//a[@class='visited chapt']/@href").reverse_each.map { |url| BASE_URL + url.text }
 
-        if index_url.include? 'series'
-          chapter_count = content_list_parse.size
-          (0...chapter_count).each do |index|
-            chapter_num = content_list_parse[index]
-            chapter_url = content_path_parse[index]
-            series[chapter_num] = chapter_url
-          end
-        elsif index_url.include? 'chapter'
-          placeholder = html_parse(index_url).xpath('//title').text.split('-')[1].strip
-          series[placeholder] = index_url
+        chapter_count = content_list.size
+        (0...chapter_count).each do |index|
+          chapter_num = content_list[index]
+          chapter_url = content_path[index]
+          series[chapter_num] = chapter_url
         end
 
         series
       rescue Interrupt
         puts 'Exiting...'
+      end
+
+      def image_parse(page)
+        js = page.xpath('//script').text
+        str_server = js.split('const server =')[1].split(';')[0]
+        str_batojs = js.split('const batojs =')[1].split(';')[0]
+        str_images = js.split('const images = ["')[1].split('"];')[0]
+        str_images.split('","').map { |image| server_parse(str_batojs, str_server) + image }
       end
 
       def server_parse(str_batojs, str_server)
@@ -73,16 +67,11 @@ begin
         duktape.eval_string(decrypt).to_s.gsub('"', '')
       end
 
-      def image_parse(page)
-        js = html_parse(page).xpath('//script').text
-        str_server = js.split('const server =')[1].split(';')[0]
-        str_batojs = js.split('const batojs =')[1].split(';')[0]
-        str_images = js.split('const images = ["')[1].split('"];')[0]
-        str_images.split('","').map { |image| server_parse(str_batojs, str_server) + image }
-      end
-
       def export(input, output)
-        URI.parse(input).open do |image|
+        URI.parse(input).open(
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5)',
+            'Referer' => BASE_URL
+        ) do |image|
           File.open(output, 'wb') do |file|
             file.write(image.read)
           end
@@ -100,35 +89,35 @@ begin
         print text
       end
 
-      def page_parse
+      def page_parse(url)
         pool = Thread.pool(3)
+        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         file_count = 0
-        total_count = 0
-        content = content_parse
 
-        content.each do |chapter, path|
-          folder_name = "#{dest_loc}/#{title_parse}/#{chapter}"
-          FileUtils.mkdir_p(folder_name)
-          puts "\nTitle: #{title_parse}\nChapter: #{chapter}"
+        page = html_parse(url)
+        title = title_parse(page)
 
-          images = image_parse(path)
+        folder_name = "#{dest_loc}/#{title[0]}/#{title[1]}"
+        FileUtils.mkdir_p(folder_name)
+        puts "\nTitle: #{title[0]}\nChapter: #{title[1]}"
 
-          images.each_with_index do |url, index|
-            pool.process do
-              file = "#{folder_name}/#{index + 1}.jpeg"
-              export(url, file)
-              file_count += 1
-              display_progress_bar(file_count, images.size.to_i)
-              sleep 2
-            end
+        images = image_parse(page)
 
-          rescue Interrupt
-            next
+        images.each_with_index do |url, index|
+          pool.process do
+            file = "#{folder_name}/#{index + 1}.jpeg"
+            export(url, file) unless File.exist? file
+            file_count += 1
+            display_progress_bar(file_count, images.size.to_i)
+            sleep 2
           end
-          total_count += images.size.to_i
+        rescue Interrupt
+          next
         end
+
         pool.shutdown
-        puts "Batch Total: #{file_count}/#{total_count}" unless content.size <= 1
+        elapsed_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time).round(1)
+        puts "\nElapsed time: #{elapsed_time}s\n"
       rescue Interrupt
         puts 'Exiting...'
       end
