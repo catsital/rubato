@@ -10,13 +10,7 @@ begin
   module Rubato
     # scraper methods
     class Scraper
-      attr_accessor :dest_loc
-
       BASE_URL = 'https://bato.to'
-
-      def initialize(dest_loc: '../extract')
-        @dest_loc = dest_loc
-      end
 
       def html_parse(page_url)
         page = URI.parse(page_url).open(
@@ -89,7 +83,7 @@ begin
         print text
       end
 
-      def page_parse(url)
+      def page_parse(url, dest_loc: '../extract')
         pool = Thread.pool(3)
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         file_count = 0
@@ -98,6 +92,7 @@ begin
         title = title_parse(page)
 
         folder_name = "#{dest_loc}/#{title[0]}/#{title[1]}"
+
         FileUtils.mkdir_p(folder_name)
         puts "\nTitle: #{title[0]}\nChapter: #{title[1]}"
 

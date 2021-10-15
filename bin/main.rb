@@ -4,35 +4,69 @@ begin
   $LOAD_PATH << '../lib'
   require 'scraper'
   require 'optparse'
+  require 'pp'
 
   # initialize
   class Main
     include Rubato
 
     scrape = Rubato::Scraper.new
+    options = {
+      :output => '../extract'
+    }
 
     OptionParser.new do |parser|
-      parser.on('-f', '--fetch URL',
-                'Fetch image(s) from a series or chapter page') do |fetch_url|
-        if fetch_url.include? 'chapter'
-          print scrape.page_parse(fetch_url)
-        end
+      parser.program_name = "Rubato"
+      parser.version = "0.1.0"
+      parser.banner = "Usage: main [options]"
 
-        if fetch_url.include? 'series'
-          page = scrape.html_parse(fetch_url)
+      parser.on('-f', '--fetch URL',
+                'Download images from a series or chapter page') do |url|
+        if url.include? 'chapter'
+          print scrape.page_parse(url, dest_loc: options[:output])
+
+        elsif url.include? 'series'
+          page = scrape.html_parse(url)
           content = scrape.series_parse(page)
           content.each do |chapter, path|
-            scrape.page_parse(path)
+            scrape.page_parse(chapter, dest_loc: options[:output])
           end
+        else
+          puts "Cannot parse this page."
         end
       end
+
       parser.on('-c', '--chapters URL',
-                'Fetch page link(s) from a series page') do |content_url|
-        print scrape.series_parse(scrape.html_parse(content_url))
+                'Get page links from a series page') do |url|
+        if url.include? 'series'
+          pp scrape.series_parse(scrape.html_parse(url))
+        else
+          puts "Cannot parse this page."
+        end
       end
+
       parser.on('-p', '--pages URL',
-                'Fetch image link(s) from an individual chapter page') do |image_url|
-        print scrape.image_parse(scrape.html_parse(image_url))
+                'Get image links from an individual chapter page') do |url|
+        if url.include? 'chapter'
+          pp scrape.image_parse(scrape.html_parse(url))
+        else
+          puts "Cannot parse this page."
+        end
+      end
+
+      parser.on('-o', '--output DIR',
+                'Set output directory') do |path|
+                  options[:output] = path
+      end
+
+      parser.on_tail("-h", "--help", "Show this message") do
+        puts parser
+        exit
+      end
+
+      parser.on_tail("-v", "--version", "Show version") do
+        puts "#{parser.program_name} #{parser.version}"
+        exit
       end
     end.parse!
   rescue Interrupt
