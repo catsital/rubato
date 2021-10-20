@@ -1,8 +1,6 @@
 # Rubato
 Rubato is a simple image scraper for [Bato](https://bato.to).
 
-![rubato](https://user-images.githubusercontent.com/18095632/127259012-0456d1ee-f6d5-4611-8d05-96a164c2d200.gif)
-
 ## Getting Started
 
 ### Prerequisites
@@ -14,10 +12,10 @@ Rubato is a simple image scraper for [Bato](https://bato.to).
 * Run `bundle install` to install dependencies.
 
 ### Usage
-Using command line, `cd` into `bin` and simply use:
+Using the command line utility, `cd` into `bin` and simply run:
 
-```
-ruby main.rb -f {series_url|chapter_url}
+```bash
+$ ruby main.rb -f {series_url|chapter_url}
 ```
 
 Images are stored under the default folder `extract`, in a fixed directory tree structure like below.
@@ -32,12 +30,12 @@ rubato
             └───...
 ```
 
-You can also scrape by using `scraper.rb` and writing:
+You can also scrape by using `scraper.rb` in a Ruby script:
 
 ```ruby
 require 'lib/scraper'
-rubato = Rubato::Scraper.new(index_url: 'https://bato.to/series/77397')
-rubato.page_parse()
+rubato = Rubato::Scraper.new
+rubato.page_parse('https://bato.to/series/77397')
 ```
 
 ## Options
