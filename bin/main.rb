@@ -12,24 +12,25 @@ begin
 
     scrape = Rubato::Scraper.new
     options = {
-      :output => '../extract'
+      :output => '../extract',
+      :format => 'jpeg'
     }
 
     OptionParser.new do |parser|
       parser.program_name = "Rubato"
-      parser.version = "0.1.0"
+      parser.version = "0.1.1"
       parser.banner = "Usage: main [options]"
 
       parser.on('-f', '--fetch URL',
                 'Download images from a series or chapter page') do |url|
         if url.include? 'chapter'
-          print scrape.page_parse(url, dest_loc: options[:output])
+          print scrape.page_parse(url, dest_loc: options[:output], format: options[:format])
 
         elsif url.include? 'series'
           page = scrape.html_parse(url)
           content = scrape.series_parse(page)
           content.each do |chapter, path|
-            scrape.page_parse(chapter, dest_loc: options[:output])
+            scrape.page_parse(chapter, dest_loc: options[:output], format: options[:format])
           end
         else
           puts "Cannot parse this page."
@@ -57,6 +58,11 @@ begin
       parser.on('-o', '--output DIR',
                 'Set output directory') do |path|
                   options[:output] = path
+      end
+
+      parser.on('-t', '--type TYPE',
+                'Set output directory') do |filetype|
+                  options[:format] = filetype
       end
 
       parser.on_tail("-h", "--help", "Show this message") do

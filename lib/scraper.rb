@@ -83,7 +83,7 @@ begin
         print text
       end
 
-      def page_parse(url, dest_loc: '../extract')
+      def page_parse(url, dest_loc: '../extract', format: 'jpeg')
         pool = Thread.pool(3)
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         file_count = 0
@@ -100,7 +100,7 @@ begin
 
         images.each_with_index do |url, index|
           pool.process do
-            file = "#{folder_name}/#{index + 1}.jpeg"
+            file = "#{folder_name}/#{index + 1}.#{format}"
             export(url, file) unless File.exist? file
             file_count += 1
             display_progress_bar(file_count, images.size.to_i)

@@ -12,7 +12,7 @@ Rubato is a simple image scraper for [Bato](https://bato.to).
 * Run `bundle install` to install dependencies.
 
 ### Usage
-Using the command line utility, `cd` into `bin` and simply run:
+Using the command-line utility, `cd` into `bin` and simply run:
 
 ```bash
 $ ruby main.rb -f {series_url|chapter_url}
@@ -49,6 +49,11 @@ rubato.page_parse('https://bato.to/series/77397')
 <code>-p <i>url</i></code>, <code>--pages <i>url</i></code>
 * Returns an array of image links parsed from a page
 
+<code>-o <i>path</i></code>, <code>--output <i>path</i></code>
+* Output directory
+
+<code>-t <i>filetype</i></code>, <code>--type <i>filetype</i></code>
+* Output format
 
 ## License
 
